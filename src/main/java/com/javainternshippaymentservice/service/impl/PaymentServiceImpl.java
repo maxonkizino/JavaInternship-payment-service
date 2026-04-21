@@ -9,6 +9,7 @@ import com.javainternshippaymentservice.exception.PaymentCardOwnershipException;
 import com.javainternshippaymentservice.exception.PaymentNotFoundException;
 import com.javainternshippaymentservice.mapper.PaymentMapper;
 import com.javainternshippaymentservice.model.Payment;
+import com.javainternshippaymentservice.model.PaymentStatus;
 import com.javainternshippaymentservice.repository.PaymentRepository;
 import com.javainternshippaymentservice.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor
@@ -26,27 +28,29 @@ public class PaymentServiceImpl implements PaymentService {
     private static final String CARD_NOT_ACTIVE_MESSAGE = "Payment card is not active: ";
     private static final String CARD_NOT_FOUND_MESSAGE = "Payment card not found: ";
 
+    private static final PaymentStatus EXCLUDED_LIST_STATUS = PaymentStatus.CANCELLED;
+
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
     private final UserPaymentCardClient userPaymentCardClient;
 
     @Override
     public PaymentResponse getPaymentById(UUID id) {
-        Payment payment = paymentRepository.findById(id)
+        Payment payment = paymentRepository.findActiveById(id, EXCLUDED_LIST_STATUS)
                 .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND_MESSAGE + id));
         return paymentMapper.toResponse(payment);
     }
 
     @Override
     public PaymentResponse getPaymentByOrderId(UUID orderId) {
-        Payment payment = paymentRepository.findByOrderId(orderId)
+        Payment payment = paymentRepository.findActiveByOrderId(orderId, EXCLUDED_LIST_STATUS)
                 .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_BY_ORDER_NOT_FOUND_MESSAGE + orderId));
         return paymentMapper.toResponse(payment);
     }
 
     @Override
     public List<PaymentResponse> getAllPayments() {
-        return paymentMapper.toResponses(paymentRepository.findAll());
+        return paymentMapper.toResponses(paymentRepository.findAllActive(EXCLUDED_LIST_STATUS));
     }
 
     @Override
@@ -59,7 +63,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponse updatePayment(UUID id, UpdatePaymentRequest updatePaymentRequest, Long paymentCardId) {
-        Payment payment = paymentRepository.findById(id)
+        Payment payment = paymentRepository.findActiveById(id, EXCLUDED_LIST_STATUS)
                 .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND_MESSAGE + id));
 
         validatePaymentCardForPayment(paymentCardId);
@@ -69,10 +73,15 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void deletePayment(UUID id) {
-        Payment payment = paymentRepository.findById(id)
+    public PaymentResponse updatePaymentStatus(UUID id, PaymentStatus newStatus, Long paymentCardId) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("Status must not be null");
+        }
+        Payment payment = paymentRepository.findActiveById(id, EXCLUDED_LIST_STATUS)
                 .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND_MESSAGE + id));
-        paymentRepository.delete(payment);
+        validatePaymentCardForPayment(paymentCardId);
+        payment.setStatus(newStatus);
+        return paymentMapper.toResponse(paymentRepository.save(payment));
     }
 
     private void validatePaymentCardForPayment(Long paymentCardId) {

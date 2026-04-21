@@ -3,58 +3,66 @@ package com.javainternshippaymentservice.service;
 import com.javainternshippaymentservice.dto.request.create.CreatePaymentRequest;
 import com.javainternshippaymentservice.dto.request.update.UpdatePaymentRequest;
 import com.javainternshippaymentservice.dto.response.PaymentResponse;
+import com.javainternshippaymentservice.model.PaymentStatus;
 
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Application service for payments: persistence and validation against user-service payment cards.
+ */
 public interface PaymentService {
 
     /**
-     * Returns payment by its identifier.
+     * Returns a payment by identifier. Payments in {@link PaymentStatus#CANCELLED} are treated as removed and are not returned.
      *
-     * @param id payment identifier
-     * @return payment view model
+     * @param id payment id
+     * @return payment data
      */
     PaymentResponse getPaymentById(UUID id);
 
     /**
-     * Returns payment by related order identifier.
+     * Returns a payment for the given order. Excludes {@link PaymentStatus#CANCELLED}.
      *
-     * @param orderId order identifier
-     * @return payment view model
+     * @param orderId order id
+     * @return payment data
      */
     PaymentResponse getPaymentByOrderId(UUID orderId);
 
     /**
-     * Returns all persisted payments.
+     * Returns all payments except those in {@link PaymentStatus#CANCELLED}.
      *
-     * @return list of payment view models
+     * @return list of payments
      */
     List<PaymentResponse> getAllPayments();
 
     /**
-     * Creates payment after validating payment card state in user-service.
+     * Creates a payment after validating the payment card in user-service.
      *
-     * @param createPaymentRequest payload for payment creation
-     * @param paymentCardId        payment card identifier from user-service
-     * @return created payment view model
+     * @param createPaymentRequest create payload
+     * @param paymentCardId      card id in user-service
+     * @return created payment
      */
     PaymentResponse createPayment(CreatePaymentRequest createPaymentRequest, Long paymentCardId);
 
     /**
-     * Updates payment after validating payment card state in user-service.
+     * Updates mutable fields after validating the payment card in user-service. Excludes cancelled payments.
      *
-     * @param id                   payment identifier
-     * @param updatePaymentRequest payload for payment update
-     * @param paymentCardId        payment card identifier from user-service
-     * @return updated payment view model
+     * @param id                   payment id
+     * @param updatePaymentRequest update payload
+     * @param paymentCardId      card id in user-service
+     * @return updated payment
      */
     PaymentResponse updatePayment(UUID id, UpdatePaymentRequest updatePaymentRequest, Long paymentCardId);
 
     /**
-     * Removes payment by its identifier.
+     * Sets the payment status after validating the payment card in user-service. Use {@link PaymentStatus#CANCELLED}
+     * instead of physical deletion. Excludes payments that are already cancelled.
      *
-     * @param id payment identifier
+     * @param id             payment id
+     * @param newStatus      target status (must not be {@code null})
+     * @param paymentCardId card id in user-service
+     * @return payment after status change
      */
-    void deletePayment(UUID id);
+    PaymentResponse updatePaymentStatus(UUID id, PaymentStatus newStatus, Long paymentCardId);
 }

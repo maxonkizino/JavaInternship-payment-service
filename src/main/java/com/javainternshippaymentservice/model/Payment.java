@@ -25,6 +25,4 @@ public class Payment extends BaseAuditingEntity {
     private Instant timestamp;
 
     private BigDecimal paymentAmount;
-
-   
 }
