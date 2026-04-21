@@ -1,11 +1,17 @@
 spring:
-    application:
+  application:
     name: JavaInternship-payment-service
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: javainternship-payment-service
-      username: root
-      password: root
-      authentication-database: admin
+  mongodb:
+    host: ${MONGODB_HOST}
+    port: ${MONGODB_PORT}
+    database: ${MONGODB_DATABASE}
+    username: ${MONGODB_USERNAME}
+    password: ${MONGODB_PASSWORD}
+    authentication-database: ${MONGODB_AUTHENTICATION_DATABASE}
+
+app:
+  csrng:
+    base-url: ${APP_CSRNG_BASE_URL}
+    path: ${APP_CSRNG_PATH}
+    min: ${APP_CSRNG_MIN}
+    max: ${APP_CSRNG_MAX}

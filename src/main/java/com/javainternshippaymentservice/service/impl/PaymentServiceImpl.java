@@ -1,5 +1,6 @@
 package com.javainternshippaymentservice.service.impl;
 
+import com.javainternshippaymentservice.client.CsrngRandomClient;
 import com.javainternshippaymentservice.client.UserPaymentCardClient;
 import com.javainternshippaymentservice.client.dto.PaymentCardInfoResponse;
 import com.javainternshippaymentservice.dto.request.create.CreatePaymentRequest;
@@ -15,6 +16,7 @@ import com.javainternshippaymentservice.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +35,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
     private final UserPaymentCardClient userPaymentCardClient;
+    private final CsrngRandomClient csrngRandomClient;
 
     @Override
     public PaymentResponse getPaymentById(UUID id) {
@@ -81,6 +84,23 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND_MESSAGE + id));
         validatePaymentCardForPayment(paymentCardId);
         payment.setStatus(newStatus);
+        return paymentMapper.toResponse(paymentRepository.save(payment));
+    }
+
+    @Override
+    public PaymentResponse processPaymentByExternalRandom(UUID id, Long paymentCardId) {
+        Payment payment = paymentRepository.findActiveById(id, EXCLUDED_LIST_STATUS)
+                .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND_MESSAGE + id));
+        PaymentStatus current = payment.getStatus();
+        if (current != PaymentStatus.CREATED && current != PaymentStatus.PROCESSING) {
+            throw new IllegalArgumentException(
+                    "Payment can only be processed when status is CREATED or PROCESSING");
+        }
+        validatePaymentCardForPayment(paymentCardId);
+        long random = csrngRandomClient.fetchRandomInclusive();
+        PaymentStatus outcome = (random % 2L == 0L) ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED;
+        payment.setStatus(outcome);
+        payment.setTimestamp(Instant.now());
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
 

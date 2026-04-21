@@ -12,9 +12,7 @@ import org.springframework.web.client.RestClient;
 public class UserServiceClientConfig {
 
     @Bean
-    public RestClient userServiceRestClient(
-            RestClient.Builder builder,
-            @Value("${USER_SERVICE_URL}") String userServiceUrl) {
-        return builder.baseUrl(userServiceUrl).build();
+    public RestClient userServiceRestClient(@Value("${USER_SERVICE_URL}") String userServiceUrl) {
+        return RestClient.builder().baseUrl(userServiceUrl).build();
     }
 }

@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: JavaInternship-payment-service
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: javainternship-payment-service-test
+      username: root
+      password: root
+      authentication-database: admin
+
+USER_SERVICE_URL: http://localhost:8080
+
+app:
+  csrng:
+    base-url: https://csrng.net
+    path: /csrng/csrng.php
+    min: 0
+    max: 2147483647

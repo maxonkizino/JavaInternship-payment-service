@@ -6,9 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-/**
- * {@link UserPaymentCardClient} backed by Spring {@link RestClient}.
- */
+
 @Component
 @RequiredArgsConstructor
 public class UserPaymentCardClientImpl implements UserPaymentCardClient {

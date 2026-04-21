@@ -65,4 +65,15 @@ public interface PaymentService {
      * @return payment after status change
      */
     PaymentResponse updatePaymentStatus(UUID id, PaymentStatus newStatus, Long paymentCardId);
+
+    /**
+     * Validates the payment card, requests a random number from CSRNG Lite, then sets status to
+     * {@link PaymentStatus#SUCCEEDED} if the number is even, or {@link PaymentStatus#FAILED} if odd.
+     * Only allowed when the current status is {@link PaymentStatus#CREATED} or {@link PaymentStatus#PROCESSING}.
+     *
+     * @param id             payment id
+     * @param paymentCardId card id in user-service
+     * @return payment after outcome is applied
+     */
+    PaymentResponse processPaymentByExternalRandom(UUID id, Long paymentCardId);
 }

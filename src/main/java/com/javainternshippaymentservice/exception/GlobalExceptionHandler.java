@@ -68,6 +68,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(CsrngClientException.class)
+    public ResponseEntity<ApiError> handleCsrng(CsrngClientException ex, HttpServletRequest request) {
+        log.warn("CSRNG client error: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_GATEWAY, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(RestClientResponseException.class)
     public ResponseEntity<ApiError> handleRestClient(RestClientResponseException ex, HttpServletRequest request) {
         HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
@@ -79,14 +85,14 @@ public class GlobalExceptionHandler {
         }
         String body = ex.getResponseBodyAsString(StandardCharsets.UTF_8);
         String message = (body != null && !body.isBlank()) ? body : ex.getMessage();
-        log.warn("Downstream user-service error: status={}, message={}", ex.getStatusCode().value(), message);
+        log.warn("Downstream HTTP error: status={}, message={}", ex.getStatusCode().value(), message);
         return buildResponse(status, message, request);
     }
 
     @ExceptionHandler(ResourceAccessException.class)
     public ResponseEntity<ApiError> handleResourceAccess(ResourceAccessException ex, HttpServletRequest request) {
-        log.error("Downstream user-service unreachable: {}", ex.getMessage());
-        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, "User service temporarily unavailable", request);
+        log.error("Remote HTTP service unreachable: {}", ex.getMessage());
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, "Remote service temporarily unavailable", request);
     }
 
     @ExceptionHandler(Exception.class)
