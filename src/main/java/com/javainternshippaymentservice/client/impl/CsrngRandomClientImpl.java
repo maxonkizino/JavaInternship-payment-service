@@ -49,8 +49,14 @@ public class CsrngRandomClientImpl implements CsrngRandomClient {
                 throw new CsrngClientException("Empty CSRNG response body");
             }
             if (!"success".equalsIgnoreCase(entry.getStatus())) {
-                String detail = entry.getReason() != null ? entry.getReason()
-                        : ("CSRNG error" + (entry.getCode() != null ? " code=" + entry.getCode() : ""));
+                String detail;
+                if (entry.getReason() != null) {
+                    detail = entry.getReason();
+                } else if (entry.getCode() != null) {
+                    detail = "CSRNG error code=" + entry.getCode();
+                } else {
+                    detail = "CSRNG error";
+                }
                 throw new CsrngClientException(detail);
             }
             if (entry.getRandom() == null) {
