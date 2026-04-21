@@ -11,15 +11,19 @@ import com.javainternshippaymentservice.exception.PaymentNotFoundException;
 import com.javainternshippaymentservice.mapper.PaymentMapper;
 import com.javainternshippaymentservice.model.Payment;
 import com.javainternshippaymentservice.model.PaymentStatus;
+import com.javainternshippaymentservice.model.specification.PaymentSpecification;
 import com.javainternshippaymentservice.repository.PaymentRepository;
 import com.javainternshippaymentservice.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +41,26 @@ public class PaymentServiceImpl implements PaymentService {
     private final UserPaymentCardClient userPaymentCardClient;
     private final CsrngRandomClient csrngRandomClient;
 
+
+    @Override
+    public Page<PaymentResponse> getPaymentsWithFilter(
+            PaymentStatus status,
+            List<PaymentStatus> statuses,
+            Instant createdAtFrom,
+            Instant createdAtTo,
+            Long userId,
+            UUID orderId,
+            Pageable pageable) {
+        Criteria criteria = PaymentSpecification.allOf(
+                PaymentSpecification.statusNot(EXCLUDED_LIST_STATUS),
+                PaymentSpecification.hasStatus(status),
+                PaymentSpecification.hasStatusesIn(statuses),
+                PaymentSpecification.createdAtBetween(createdAtFrom, createdAtTo),
+                PaymentSpecification.hasUserId(userId),
+                PaymentSpecification.hasOrderId(orderId));
+        return toResponsePage(paymentRepository.findPageByCriteria(criteria, pageable));
+    }
+
     @Override
     public PaymentResponse getPaymentById(UUID id) {
         Payment payment = paymentRepository.findActiveById(id, EXCLUDED_LIST_STATUS)
@@ -52,14 +76,20 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentResponse> getAllPayments() {
-        return paymentMapper.toResponses(paymentRepository.findAllActive(EXCLUDED_LIST_STATUS));
+    public Page<PaymentResponse> getAllPayments(Pageable pageable) {
+        Criteria criteria = PaymentSpecification.allOf(PaymentSpecification.statusNot(EXCLUDED_LIST_STATUS));
+        return toResponsePage(paymentRepository.findPageByCriteria(criteria, pageable));
     }
+
+
 
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest createPaymentRequest, Long paymentCardId) {
         validatePaymentCardForPayment(paymentCardId);
         Payment payment = paymentMapper.toEntity(createPaymentRequest);
+        if (payment.getId() == null) {
+            payment.setId(UUID.randomUUID());
+        }
         Payment savedPayment = paymentRepository.save(payment);
         return paymentMapper.toResponse(savedPayment);
     }
@@ -102,6 +132,13 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(outcome);
         payment.setTimestamp(Instant.now());
         return paymentMapper.toResponse(paymentRepository.save(payment));
+    }
+
+    private Page<PaymentResponse> toResponsePage(Page<Payment> page) {
+        return new PageImpl<>(
+                paymentMapper.toResponses(page.getContent()),
+                page.getPageable(),
+                page.getTotalElements());
     }
 
     private void validatePaymentCardForPayment(Long paymentCardId) {

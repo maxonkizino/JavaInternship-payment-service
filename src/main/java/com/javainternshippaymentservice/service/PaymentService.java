@@ -4,7 +4,10 @@ import com.javainternshippaymentservice.dto.request.create.CreatePaymentRequest;
 import com.javainternshippaymentservice.dto.request.update.UpdatePaymentRequest;
 import com.javainternshippaymentservice.dto.response.PaymentResponse;
 import com.javainternshippaymentservice.model.PaymentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,17 +33,39 @@ public interface PaymentService {
     PaymentResponse getPaymentByOrderId(UUID orderId);
 
     /**
-     * Returns all payments except those in {@link PaymentStatus#CANCELLED}.
+     * Returns a page of payments excluding {@link PaymentStatus#CANCELLED}.
      *
-     * @return list of payments
+     * @param pageable paging and sort
+     * @return page of payments
      */
-    List<PaymentResponse> getAllPayments();
+    Page<PaymentResponse> getAllPayments(Pageable pageable);
+
+    /**
+     * Returns a page of payments matching optional filters. Cancelled payments are always excluded from results.
+     *
+     * @param status          exact status filter
+     * @param statuses        status in-list filter
+     * @param createdAtFrom   inclusive lower bound on {@code createdAt}
+     * @param createdAtTo     inclusive upper bound on {@code createdAt}
+     * @param userId          owner user id
+     * @param orderId         related order id
+     * @param pageable        paging and sort
+     * @return page of payments
+     */
+    Page<PaymentResponse> getPaymentsWithFilter(
+            PaymentStatus status,
+            List<PaymentStatus> statuses,
+            Instant createdAtFrom,
+            Instant createdAtTo,
+            Long userId,
+            UUID orderId,
+            Pageable pageable);
 
     /**
      * Creates a payment after validating the payment card in user-service.
      *
      * @param createPaymentRequest create payload
-     * @param paymentCardId      card id in user-service
+     * @param paymentCardId        card id in user-service
      * @return created payment
      */
     PaymentResponse createPayment(CreatePaymentRequest createPaymentRequest, Long paymentCardId);
@@ -50,7 +75,7 @@ public interface PaymentService {
      *
      * @param id                   payment id
      * @param updatePaymentRequest update payload
-     * @param paymentCardId      card id in user-service
+     * @param paymentCardId        card id in user-service
      * @return updated payment
      */
     PaymentResponse updatePayment(UUID id, UpdatePaymentRequest updatePaymentRequest, Long paymentCardId);
@@ -61,7 +86,7 @@ public interface PaymentService {
      *
      * @param id             payment id
      * @param newStatus      target status (must not be {@code null})
-     * @param paymentCardId card id in user-service
+     * @param paymentCardId  card id in user-service
      * @return payment after status change
      */
     PaymentResponse updatePaymentStatus(UUID id, PaymentStatus newStatus, Long paymentCardId);
@@ -72,7 +97,7 @@ public interface PaymentService {
      * Only allowed when the current status is {@link PaymentStatus#CREATED} or {@link PaymentStatus#PROCESSING}.
      *
      * @param id             payment id
-     * @param paymentCardId card id in user-service
+     * @param paymentCardId  card id in user-service
      * @return payment after outcome is applied
      */
     PaymentResponse processPaymentByExternalRandom(UUID id, Long paymentCardId);

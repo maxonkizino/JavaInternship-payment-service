@@ -1,13 +1,14 @@
 spring:
   application:
     name: JavaInternship-payment-service
-  mongodb:
-    host: ${MONGODB_HOST}
-    port: ${MONGODB_PORT}
-    database: ${MONGODB_DATABASE}
-    username: ${MONGODB_USERNAME}
-    password: ${MONGODB_PASSWORD}
-    authentication-database: ${MONGODB_AUTHENTICATION_DATABASE}
+  data:
+    mongodb:
+      host: ${MONGODB_HOST}
+      port: ${MONGODB_PORT}
+      database: ${MONGODB_DATABASE}
+      username: ${MONGODB_USERNAME}
+      password: ${MONGODB_PASSWORD}
+      authentication-database: ${MONGODB_AUTHENTICATION_DATABASE}
 
 app:
   csrng:

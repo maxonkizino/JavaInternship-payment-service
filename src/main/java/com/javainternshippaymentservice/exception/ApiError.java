@@ -5,9 +5,6 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * JSON error body returned by {@link GlobalExceptionHandler}.
- */
 @Data
 @AllArgsConstructor
 public class ApiError {
