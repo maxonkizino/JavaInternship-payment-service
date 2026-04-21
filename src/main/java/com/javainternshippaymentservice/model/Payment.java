@@ -14,7 +14,7 @@ import lombok.Data;
 public class Payment extends BaseAuditingEntity {
 
     @Id
-    private String id;
+    private UUID id;
 
     private UUID orderId;
 
@@ -22,8 +22,9 @@ public class Payment extends BaseAuditingEntity {
 
     private PaymentStatus status;
 
-    private Instant processedAt;
+    private Instant timestamp;
 
     private BigDecimal paymentAmount;
 
+   
 }
