@@ -1,6 +1,8 @@
 spring:
   application:
     name: JavaInternship-payment-service
+  kafka:
+    bootstrap-servers: localhost:9092
   data:
     mongodb:
       host: localhost
@@ -13,6 +15,8 @@ spring:
 USER_SERVICE_URL: http://localhost:8080
 
 app:
+  kafka:
+    enabled: false
   csrng:
     base-url: https://csrng.net
     path: /csrng/csrng.php

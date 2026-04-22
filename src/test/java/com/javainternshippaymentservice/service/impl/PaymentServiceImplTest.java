@@ -6,6 +6,7 @@ import com.javainternshippaymentservice.client.dto.PaymentCardInfoResponse;
 import com.javainternshippaymentservice.dto.request.create.CreatePaymentRequest;
 import com.javainternshippaymentservice.dto.request.update.UpdatePaymentRequest;
 import com.javainternshippaymentservice.dto.response.PaymentResponse;
+import com.javainternshippaymentservice.event.PaymentEventPublisher;
 import com.javainternshippaymentservice.exception.PaymentCardOwnershipException;
 import com.javainternshippaymentservice.exception.PaymentNotFoundException;
 import com.javainternshippaymentservice.mapper.PaymentMapper;
@@ -51,6 +52,8 @@ class PaymentServiceImplTest {
     private UserPaymentCardClient userPaymentCardClient;
     @Mock
     private CsrngRandomClient csrngRandomClient;
+    @Mock
+    private PaymentEventPublisher paymentEventPublisher;
 
     @InjectMocks
     private PaymentServiceImpl paymentService;
@@ -147,6 +150,7 @@ class PaymentServiceImplTest {
 
         assertEquals(saved.getId(), result.getId());
         assertNotNull(paymentWithoutId.getId());
+        verify(paymentEventPublisher).publishCreatePayment(saved);
     }
 
     @Test

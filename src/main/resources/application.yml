@@ -1,6 +1,13 @@
 spring:
   application:
     name: JavaInternship-payment-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
   data:
     mongodb:
       host: ${MONGODB_HOST}
@@ -11,6 +18,10 @@ spring:
       authentication-database: ${MONGODB_AUTHENTICATION_DATABASE}
 
 app:
+  kafka:
+    enabled: ${APP_KAFKA_ENABLED:true}
+    topics:
+      create-payment: ${APP_KAFKA_TOPIC_CREATE_PAYMENT:create-payment}
   csrng:
     base-url: ${APP_CSRNG_BASE_URL}
     path: ${APP_CSRNG_PATH}

@@ -1,0 +1,95 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: payment-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - payment-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: payment-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_INTERNAL_PORT:-29092}:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - payment-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: payment-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "${KAFKA_UI_PORT:-8088}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - payment-network
+
+  mongo:
+    image: mongo:7.0
+    container_name: payment-mongo
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-root}
+    volumes:
+      - payment_mongo_data:/data/db
+    networks:
+      - payment-network
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment-service
+    depends_on:
+      - mongo
+      - kafka
+    ports:
+      - "${PAYMENT_SERVICE_PORT:-8084}:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8084
+      MONGODB_HOST: mongo
+      MONGODB_PORT: 27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-javainternship-payment-service}
+      MONGODB_USERNAME: ${MONGODB_USERNAME:-root}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD:-root}
+      MONGODB_AUTHENTICATION_DATABASE: ${MONGODB_AUTHENTICATION_DATABASE:-admin}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APP_KAFKA_ENABLED: "true"
+      APP_KAFKA_TOPIC_CREATE_PAYMENT: create-payment
+      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://host.docker.internal:8081}
+      APP_CSRNG_BASE_URL: ${APP_CSRNG_BASE_URL:-https://csrng.net}
+      APP_CSRNG_PATH: ${APP_CSRNG_PATH:-/csrng/csrng.php}
+      APP_CSRNG_MIN: ${APP_CSRNG_MIN:-0}
+      APP_CSRNG_MAX: ${APP_CSRNG_MAX:-2147483647}
+    networks:
+      - payment-network
+
+volumes:
+  payment_mongo_data:
+
+networks:
+  payment-network:
+    driver: bridge

@@ -6,6 +6,7 @@ import com.javainternshippaymentservice.client.dto.PaymentCardInfoResponse;
 import com.javainternshippaymentservice.dto.request.create.CreatePaymentRequest;
 import com.javainternshippaymentservice.dto.request.update.UpdatePaymentRequest;
 import com.javainternshippaymentservice.dto.response.PaymentResponse;
+import com.javainternshippaymentservice.event.PaymentEventPublisher;
 import com.javainternshippaymentservice.exception.PaymentCardOwnershipException;
 import com.javainternshippaymentservice.exception.PaymentNotFoundException;
 import com.javainternshippaymentservice.mapper.PaymentMapper;
@@ -40,6 +41,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper paymentMapper;
     private final UserPaymentCardClient userPaymentCardClient;
     private final CsrngRandomClient csrngRandomClient;
+    private final PaymentEventPublisher paymentEventPublisher;
 
 
     @Override
@@ -91,6 +93,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setId(UUID.randomUUID());
         }
         Payment savedPayment = paymentRepository.save(payment);
+        paymentEventPublisher.publishCreatePayment(savedPayment);
         return paymentMapper.toResponse(savedPayment);
     }
 
