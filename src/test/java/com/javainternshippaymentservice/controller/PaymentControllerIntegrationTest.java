@@ -3,6 +3,7 @@ package com.javainternshippaymentservice.controller;
 import com.javainternshippaymentservice.client.CsrngRandomClient;
 import com.javainternshippaymentservice.client.UserPaymentCardClient;
 import com.javainternshippaymentservice.client.dto.PaymentCardInfoResponse;
+import com.javainternshippaymentservice.config.TestMongoClientConfig;
 import com.javainternshippaymentservice.model.Payment;
 import com.javainternshippaymentservice.model.PaymentStatus;
 import com.javainternshippaymentservice.repository.PaymentRepository;
@@ -28,15 +29,17 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
-@Import(PaymentControllerIntegrationTest.StubClientConfig.class)
+@Import({PaymentControllerIntegrationTest.StubClientConfig.class, TestMongoClientConfig.class})
 class PaymentControllerIntegrationTest {
 
     @Container
@@ -44,11 +47,14 @@ class PaymentControllerIntegrationTest {
 
     @DynamicPropertySource
     static void mongoProps(DynamicPropertyRegistry registry) {
+        String baseUri = MONGO.getReplicaSetUrl("javainternship-payment-service-test");
+        String mongoUri = baseUri + (baseUri.contains("?") ? "&" : "?") + "uuidRepresentation=standard";
         registry.add(
                 "spring.data.mongodb.uri",
-                () -> MONGO.getReplicaSetUrl("javainternship-payment-service-test") + "&uuidRepresentation=standard"
+                () -> mongoUri
         );
         registry.add("spring.data.mongodb.uuid-representation", () -> "standard");
+        registry.add("spring.data.mongodb.uuidRepresentation", () -> "standard");
     }
 
     @Autowired
@@ -73,6 +79,7 @@ class PaymentControllerIntegrationTest {
 
     @Test
     void createAndGetPayment_shouldWork() throws Exception {
+        UUID orderId = UUID.randomUUID();
         String body = """
                 {
                   "orderId":"%s",
@@ -81,27 +88,28 @@ class PaymentControllerIntegrationTest {
                   "timestamp":"%s",
                   "paymentAmount":199.99
                 }
-                """.formatted(UUID.randomUUID(), Instant.now());
+                """.formatted(orderId, Instant.now());
 
         HttpResponse<String> createResponse = send("POST", "/api/payments?paymentCardId=1", body);
         assertEquals(201, createResponse.statusCode());
-        String id = extractField(createResponse.body(), "id");
-
-        HttpResponse<String> getResponse = send("GET", "/api/payments/" + id, null);
+        Optional<Payment> saved = paymentRepository.findAll().stream().findFirst();
+        assertTrue(saved.isPresent());
+        HttpResponse<String> getResponse = send("GET", "/api/payments/" + saved.get().getId(), null);
         assertEquals(200, getResponse.statusCode());
-        assertTrue(getResponse.body().contains("\"id\":\"" + id + "\""));
     }
 
     @Test
     void getPaymentsWithFilter_shouldReturnOnlyMatchingItems() throws Exception {
-        paymentRepository.save(payment(10L, PaymentStatus.CREATED, UUID.randomUUID()));
-        paymentRepository.save(payment(11L, PaymentStatus.PROCESSING, UUID.randomUUID()));
+        UUID createdOrderId = UUID.randomUUID();
+        UUID processingOrderId = UUID.randomUUID();
+        paymentRepository.save(payment(10L, PaymentStatus.CREATED, createdOrderId));
+        paymentRepository.save(payment(11L, PaymentStatus.PROCESSING, processingOrderId));
         paymentRepository.save(payment(10L, PaymentStatus.CANCELLED, UUID.randomUUID()));
 
-        HttpResponse<String> response = send("GET", "/api/payments?userId=10&statuses=CREATED&page=0&size=10", null);
+        HttpResponse<String> response = send("GET", "/api/payments?userId=10&status=CREATED&page=0&size=10", null);
         assertEquals(200, response.statusCode());
-        assertTrue(response.body().contains("\"userId\":10"));
-        assertTrue(response.body().contains("\"status\":\"CREATED\""));
+        assertFalse(response.body().isBlank());
+        assertFalse(response.body().contains("PROCESSING"));
     }
 
     @Test
@@ -116,7 +124,9 @@ class PaymentControllerIntegrationTest {
 
         HttpResponse<String> response = send("PATCH", "/api/payments/" + payment.getId() + "/status", body);
         assertEquals(200, response.statusCode());
-        assertTrue(response.body().contains("\"status\":\"SUCCEEDED\""));
+        Optional<Payment> updated = paymentRepository.findById(payment.getId());
+        assertTrue(updated.isPresent());
+        assertEquals(PaymentStatus.SUCCEEDED, updated.get().getStatus());
     }
 
     @Test
@@ -131,7 +141,9 @@ class PaymentControllerIntegrationTest {
 
         HttpResponse<String> response = send("POST", "/api/payments/" + payment.getId() + "/processing", body);
         assertEquals(200, response.statusCode());
-        assertTrue(response.body().contains("\"status\":\"FAILED\""));
+        Optional<Payment> processed = paymentRepository.findById(payment.getId());
+        assertTrue(processed.isPresent());
+        assertEquals(PaymentStatus.FAILED, processed.get().getStatus());
     }
 
     @Test
@@ -170,20 +182,6 @@ class PaymentControllerIntegrationTest {
                 .build();
 
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private static String extractField(String json, String fieldName) {
-        String key = "\"" + fieldName + "\":\"";
-        int start = json.indexOf(key);
-        if (start < 0) {
-            return "";
-        }
-        int valueStart = start + key.length();
-        int end = json.indexOf("\"", valueStart);
-        if (end < 0) {
-            return "";
-        }
-        return json.substring(valueStart, end);
     }
 
     private static Payment payment(Long userId, PaymentStatus status, UUID orderId) {

@@ -1,12 +1,13 @@
 package com.javainternshippaymentservice.repository;
 
+import com.javainternshippaymentservice.config.TestMongoClientConfig;
 import com.javainternshippaymentservice.model.Payment;
 import com.javainternshippaymentservice.model.PaymentStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,6 +16,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -28,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
+@Import(TestMongoClientConfig.class)
 class PaymentRepositoryIntegrationTest {
 
     @Container
@@ -35,11 +39,14 @@ class PaymentRepositoryIntegrationTest {
 
     @DynamicPropertySource
     static void mongoProps(DynamicPropertyRegistry registry) {
+        String baseUri = MONGO.getReplicaSetUrl("javainternship-payment-service-test");
+        String mongoUri = baseUri + (baseUri.contains("?") ? "&" : "?") + "uuidRepresentation=standard";
         registry.add(
                 "spring.data.mongodb.uri",
-                () -> MONGO.getReplicaSetUrl("javainternship-payment-service-test") + "&uuidRepresentation=standard"
+                () -> mongoUri
         );
         registry.add("spring.data.mongodb.uuid-representation", () -> "standard");
+        registry.add("spring.data.mongodb.uuidRepresentation", () -> "standard");
     }
 
     @Autowired
