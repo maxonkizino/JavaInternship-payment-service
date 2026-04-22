@@ -10,6 +10,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -22,7 +27,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Testcontainers(disabledWithoutDocker = true)
 class PaymentRepositoryIntegrationTest {
+
+    @Container
+    static final MongoDBContainer MONGO = new MongoDBContainer("mongo:7.0");
+
+    @DynamicPropertySource
+    static void mongoProps(DynamicPropertyRegistry registry) {
+        registry.add(
+                "spring.data.mongodb.uri",
+                () -> MONGO.getReplicaSetUrl("javainternship-payment-service-test") + "&uuidRepresentation=standard"
+        );
+        registry.add("spring.data.mongodb.uuid-representation", () -> "standard");
+    }
 
     @Autowired
     private PaymentRepository paymentRepository;

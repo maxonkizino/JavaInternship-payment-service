@@ -16,6 +16,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -30,8 +35,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Testcontainers(disabledWithoutDocker = true)
 @Import(PaymentControllerIntegrationTest.StubClientConfig.class)
 class PaymentControllerIntegrationTest {
+
+    @Container
+    static final MongoDBContainer MONGO = new MongoDBContainer("mongo:7.0");
+
+    @DynamicPropertySource
+    static void mongoProps(DynamicPropertyRegistry registry) {
+        registry.add(
+                "spring.data.mongodb.uri",
+                () -> MONGO.getReplicaSetUrl("javainternship-payment-service-test") + "&uuidRepresentation=standard"
+        );
+        registry.add("spring.data.mongodb.uuid-representation", () -> "standard");
+    }
 
     @Autowired
     private PaymentRepository paymentRepository;

@@ -22,20 +22,6 @@ jobs:
     name: Build, Test & Sonar
     runs-on: ubuntu-latest
 
-    services:
-      mongo:
-        image: mongo:7.0
-        env:
-          MONGO_INITDB_ROOT_USERNAME: root
-          MONGO_INITDB_ROOT_PASSWORD: root
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })' --quiet"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,14 +38,6 @@ jobs:
       - name: Build & test (Maven verify)
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATA_MONGODB_URI: mongodb://root:root@localhost:27017/javainternship-payment-service-test?authSource=admin&uuidRepresentation=standard
-          MONGODB_HOST: localhost
-          MONGODB_PORT: 27017
-          MONGODB_DATABASE: javainternship-payment-service-test
-          MONGODB_USERNAME: root
-          MONGODB_PASSWORD: root
-          MONGODB_AUTHENTICATION_DATABASE: admin
-          SPRING_DATA_MONGODB_UUID_REPRESENTATION: standard
           APP_KAFKA_ENABLED: false
         run: mvn -B clean verify -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false
 
