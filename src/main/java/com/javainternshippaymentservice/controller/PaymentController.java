@@ -58,7 +58,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 
-    @GetMapping("/by-order/{orderId}")
+    @GetMapping("/order/{orderId}")
     public ResponseEntity<PaymentResponse> getPaymentByOrderId(@PathVariable UUID orderId) {
         return ResponseEntity.ok(paymentService.getPaymentByOrderId(orderId));
     }
@@ -87,7 +87,7 @@ public class PaymentController {
                 id, request.getStatus(), request.getPaymentCardId()));
     }
 
-    @PostMapping("/{id}/process")
+    @PostMapping("/{id}/processing")
     public ResponseEntity<PaymentResponse> processPayment(
             @PathVariable UUID id,
             @Valid @RequestBody ProcessPaymentRequest request) {
