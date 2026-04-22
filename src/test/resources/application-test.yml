@@ -5,12 +5,9 @@ spring:
     bootstrap-servers: localhost:9092
   data:
     mongodb:
-      host: localhost
-      port: 27017
-      database: javainternship-payment-service-test
-      username: root
-      password: root
-      authentication-database: admin
+      uri: mongodb://${MONGODB_USERNAME:root}:${MONGODB_PASSWORD:root}@${MONGODB_HOST:localhost}:${MONGODB_PORT:27017}/${MONGODB_DATABASE:javainternship-payment-service-test}?authSource=${MONGODB_AUTHENTICATION_DATABASE:admin}&uuidRepresentation=standard
+      uuid-representation: standard
+      uuidRepresentation: standard
 
 USER_SERVICE_URL: http://localhost:8080
 

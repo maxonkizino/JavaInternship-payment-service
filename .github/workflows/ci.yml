@@ -52,12 +52,14 @@ jobs:
       - name: Build & test (Maven verify)
         env:
           SPRING_PROFILES_ACTIVE: test
+          SPRING_DATA_MONGODB_URI: mongodb://root:root@localhost:27017/javainternship-payment-service-test?authSource=admin&uuidRepresentation=standard
           MONGODB_HOST: localhost
           MONGODB_PORT: 27017
           MONGODB_DATABASE: javainternship-payment-service-test
           MONGODB_USERNAME: root
           MONGODB_PASSWORD: root
           MONGODB_AUTHENTICATION_DATABASE: admin
+          SPRING_DATA_MONGODB_UUID_REPRESENTATION: standard
           APP_KAFKA_ENABLED: false
         run: mvn -B clean verify -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false
 
