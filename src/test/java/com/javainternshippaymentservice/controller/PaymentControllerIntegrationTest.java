@@ -170,6 +170,26 @@ class PaymentControllerIntegrationTest {
         assertEquals(404, response.statusCode());
     }
 
+    @Test
+    void getPaymentByOrderId_shouldReturn404ForMissingPayment() throws Exception {
+        HttpResponse<String> response = send("GET", "/api/payments/order/" + UUID.randomUUID(), null);
+        assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void createPayment_shouldReturnBadRequestForInvalidBody() throws Exception {
+        String invalidBody = """
+                {
+                  "userId":0,
+                  "status":"CREATED",
+                  "paymentAmount":-1
+                }
+                """;
+
+        HttpResponse<String> response = send("POST", "/api/payments?paymentCardId=1", invalidBody);
+        assertEquals(400, response.statusCode());
+    }
+
     private HttpResponse<String> send(String method, String path, String jsonBody) throws Exception {
         HttpRequest.BodyPublisher publisher = jsonBody == null
                 ? HttpRequest.BodyPublishers.noBody()

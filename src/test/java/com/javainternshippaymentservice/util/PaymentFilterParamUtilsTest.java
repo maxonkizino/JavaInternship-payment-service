@@ -37,4 +37,32 @@ class PaymentFilterParamUtilsTest {
 
         assertTrue(result);
     }
+
+    @Test
+    void hasAnyFilter_shouldReturnTrueWhenStatusesListProvidedWithoutSingleStatus() {
+        boolean result = PaymentFilterParamUtils.hasAnyFilter(
+                null,
+                List.of(PaymentStatus.FAILED, PaymentStatus.SUCCEEDED),
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertTrue(result);
+    }
+
+    @Test
+    void hasAnyFilter_shouldReturnTrueWhenOnlyOrderIdProvided() {
+        boolean result = PaymentFilterParamUtils.hasAnyFilter(
+                null,
+                null,
+                null,
+                null,
+                null,
+                UUID.randomUUID()
+        );
+
+        assertTrue(result);
+    }
 }
