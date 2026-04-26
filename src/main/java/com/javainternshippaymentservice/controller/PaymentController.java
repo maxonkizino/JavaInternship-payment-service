@@ -5,6 +5,7 @@ import com.javainternshippaymentservice.dto.request.create.CreatePaymentRequest;
 import com.javainternshippaymentservice.dto.request.update.UpdatePaymentRequest;
 import com.javainternshippaymentservice.dto.request.update.UpdatePaymentStatusRequest;
 import com.javainternshippaymentservice.dto.response.PaymentResponse;
+import com.javainternshippaymentservice.logging.ControllerLogger;
 import com.javainternshippaymentservice.model.PaymentStatus;
 import com.javainternshippaymentservice.service.PaymentService;
 import com.javainternshippaymentservice.util.PaymentFilterParamUtils;
@@ -36,6 +37,7 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final ControllerLogger controllerLogger;
 
     @GetMapping
     public ResponseEntity<Page<PaymentResponse>> getPayments(
@@ -46,6 +48,7 @@ public class PaymentController {
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) UUID orderId,
             Pageable pageable) {
+        controllerLogger.methodCalled("PaymentController", "getPayments", status, statuses, createdAtFrom, createdAtTo, userId, orderId);
         if (PaymentFilterParamUtils.hasAnyFilter(status, statuses, createdAtFrom, createdAtTo, userId, orderId)) {
             return ResponseEntity.ok(paymentService.getPaymentsWithFilter(
                     status, statuses, createdAtFrom, createdAtTo, userId, orderId, pageable));
@@ -55,11 +58,13 @@ public class PaymentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable UUID id) {
+        controllerLogger.methodCalled("PaymentController", "getPaymentById", id);
         return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 
     @GetMapping("/order/{orderId}")
     public ResponseEntity<PaymentResponse> getPaymentByOrderId(@PathVariable UUID orderId) {
+        controllerLogger.methodCalled("PaymentController", "getPaymentByOrderId", orderId);
         return ResponseEntity.ok(paymentService.getPaymentByOrderId(orderId));
     }
 
@@ -67,6 +72,7 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> createPayment(
             @Valid @RequestBody CreatePaymentRequest request,
             @RequestParam Long paymentCardId) {
+        controllerLogger.methodCalled("PaymentController", "createPayment", paymentCardId, request.getOrderId());
         PaymentResponse created = paymentService.createPayment(request, paymentCardId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -76,6 +82,7 @@ public class PaymentController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdatePaymentRequest request,
             @RequestParam Long paymentCardId) {
+        controllerLogger.methodCalled("PaymentController", "updatePayment", id, paymentCardId);
         return ResponseEntity.ok(paymentService.updatePayment(id, request, paymentCardId));
     }
 
@@ -83,6 +90,7 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> updatePaymentStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdatePaymentStatusRequest request) {
+        controllerLogger.methodCalled("PaymentController", "updatePaymentStatus", id, request.getStatus(), request.getPaymentCardId());
         return ResponseEntity.ok(paymentService.updatePaymentStatus(
                 id, request.getStatus(), request.getPaymentCardId()));
     }
@@ -91,6 +99,7 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> processPayment(
             @PathVariable UUID id,
             @Valid @RequestBody ProcessPaymentRequest request) {
+        controllerLogger.methodCalled("PaymentController", "processPayment", id, request.getPaymentCardId());
         return ResponseEntity.ok(paymentService.processPaymentByExternalRandom(id, request.getPaymentCardId()));
     }
 }
