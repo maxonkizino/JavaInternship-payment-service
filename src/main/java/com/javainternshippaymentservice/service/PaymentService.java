@@ -1,0 +1,104 @@
+package com.javainternshippaymentservice.service;
+
+import com.javainternshippaymentservice.dto.request.create.CreatePaymentRequest;
+import com.javainternshippaymentservice.dto.request.update.UpdatePaymentRequest;
+import com.javainternshippaymentservice.dto.response.PaymentResponse;
+import com.javainternshippaymentservice.model.PaymentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Application service for payments: persistence and validation against user-service payment cards.
+ */
+public interface PaymentService {
+
+    /**
+     * Returns a payment by identifier. Payments in {@link PaymentStatus#CANCELLED} are treated as removed and are not returned.
+     *
+     * @param id payment id
+     * @return payment data
+     */
+    PaymentResponse getPaymentById(UUID id);
+
+    /**
+     * Returns a payment for the given order. Excludes {@link PaymentStatus#CANCELLED}.
+     *
+     * @param orderId order id
+     * @return payment data
+     */
+    PaymentResponse getPaymentByOrderId(UUID orderId);
+
+    /**
+     * Returns a page of payments excluding {@link PaymentStatus#CANCELLED}.
+     *
+     * @param pageable paging and sort
+     * @return page of payments
+     */
+    Page<PaymentResponse> getAllPayments(Pageable pageable);
+
+    /**
+     * Returns a page of payments matching optional filters. Cancelled payments are always excluded from results.
+     *
+     * @param status          exact status filter
+     * @param statuses        status in-list filter
+     * @param createdAtFrom   inclusive lower bound on {@code createdAt}
+     * @param createdAtTo     inclusive upper bound on {@code createdAt}
+     * @param userId          owner user id
+     * @param orderId         related order id
+     * @param pageable        paging and sort
+     * @return page of payments
+     */
+    Page<PaymentResponse> getPaymentsWithFilter(
+            PaymentStatus status,
+            List<PaymentStatus> statuses,
+            Instant createdAtFrom,
+            Instant createdAtTo,
+            Long userId,
+            UUID orderId,
+            Pageable pageable);
+
+    /**
+     * Creates a payment after validating the payment card in user-service.
+     *
+     * @param createPaymentRequest create payload
+     * @param paymentCardId        card id in user-service
+     * @return created payment
+     */
+    PaymentResponse createPayment(CreatePaymentRequest createPaymentRequest, Long paymentCardId);
+
+    /**
+     * Updates mutable fields after validating the payment card in user-service. Excludes cancelled payments.
+     *
+     * @param id                   payment id
+     * @param updatePaymentRequest update payload
+     * @param paymentCardId        card id in user-service
+     * @return updated payment
+     */
+    PaymentResponse updatePayment(UUID id, UpdatePaymentRequest updatePaymentRequest, Long paymentCardId);
+
+    /**
+     * Sets the payment status after validating the payment card in user-service. Use {@link PaymentStatus#CANCELLED}
+     * instead of physical deletion. Excludes payments that are already cancelled.
+     *
+     * @param id             payment id
+     * @param newStatus      target status (must not be {@code null})
+     * @param paymentCardId  card id in user-service
+     * @return payment after status change
+     */
+    PaymentResponse updatePaymentStatus(UUID id, PaymentStatus newStatus, Long paymentCardId);
+
+    /**
+     * Validates the payment card, requests a random number from CSRNG Lite, then sets status to
+     * {@link PaymentStatus#SUCCEEDED} if the number is even, or {@link PaymentStatus#FAILED} if odd.
+     * Only allowed when the current status is {@link PaymentStatus#CREATED} or {@link PaymentStatus#PROCESSING}.
+     *
+     * @param id             payment id
+     * @param paymentCardId  card id in user-service
+     * @return payment after outcome is applied
+     */
+    PaymentResponse processPaymentByExternalRandom(UUID id, Long paymentCardId);
+}

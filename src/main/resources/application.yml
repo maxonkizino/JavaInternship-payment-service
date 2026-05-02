@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: JavaInternship-payment-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: ${JWT_SECRET:development-jwt-secret-at-least-256-bits-long-for-hs256-algorithm-secure-key}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+app:
+  kafka:
+    enabled: ${APP_KAFKA_ENABLED:true}
+    topics:
+      create-payment: ${APP_KAFKA_TOPIC_CREATE_PAYMENT:create-payment}
+  csrng:
+    base-url: ${APP_CSRNG_BASE_URL:https://csrng.net}
+    path: ${APP_CSRNG_PATH:/csrng/csrng.php}
+    min: ${APP_CSRNG_MIN:0}
+    max: ${APP_CSRNG_MAX:2147483647}

@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: JavaInternship-payment-service
+  kafka:
+    bootstrap-servers: localhost:9092
+  data:
+    mongodb:
+      uuid-representation: standard
+      uuidRepresentation: standard
+
+USER_SERVICE_URL: http://localhost:8080
+
+app:
+  kafka:
+    enabled: false
+  csrng:
+    base-url: https://csrng.net
+    path: /csrng/csrng.php
+    min: 0
+    max: 2147483647

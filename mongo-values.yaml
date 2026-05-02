@@ -1,0 +1,29 @@
+
+global:
+  security:
+    allowInsecureImages: true
+
+image:
+  registry: docker.io
+  repository: bitnami/mongodb
+
+architecture: standalone
+useStatefulSet: true
+
+auth:
+  enabled: true
+  rootUser: root
+  rootPassword: root
+
+persistence:
+  enabled: true
+  size: 8Gi
+  storageClass: "standard"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
