@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -40,6 +41,7 @@ public class PaymentController {
     private final ControllerLogger controllerLogger;
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Page<PaymentResponse>> getPayments(
             @RequestParam(required = false) PaymentStatus status,
             @RequestParam(required = false) List<PaymentStatus> statuses,
@@ -57,18 +59,21 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable UUID id) {
         controllerLogger.methodCalled("PaymentController", "getPaymentById", id);
         return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<PaymentResponse> getPaymentByOrderId(@PathVariable UUID orderId) {
         controllerLogger.methodCalled("PaymentController", "getPaymentByOrderId", orderId);
         return ResponseEntity.ok(paymentService.getPaymentByOrderId(orderId));
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<PaymentResponse> createPayment(
             @Valid @RequestBody CreatePaymentRequest request,
             @RequestParam Long paymentCardId) {
@@ -78,6 +83,7 @@ public class PaymentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<PaymentResponse> updatePayment(
             @PathVariable UUID id,
             @Valid @RequestBody UpdatePaymentRequest request,
@@ -87,6 +93,7 @@ public class PaymentController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<PaymentResponse> updatePaymentStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdatePaymentStatusRequest request) {
@@ -96,6 +103,7 @@ public class PaymentController {
     }
 
     @PostMapping("/{id}/processing")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<PaymentResponse> processPayment(
             @PathVariable UUID id,
             @Valid @RequestBody ProcessPaymentRequest request) {

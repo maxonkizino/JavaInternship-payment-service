@@ -70,12 +70,15 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: 8084
-      MONGODB_HOST: mongo
-      MONGODB_PORT: 27017
-      MONGODB_DATABASE: ${MONGODB_DATABASE:-javainternship-payment-service}
-      MONGODB_USERNAME: ${MONGODB_USERNAME:-root}
-      MONGODB_PASSWORD: ${MONGODB_PASSWORD:-root}
-      MONGODB_AUTHENTICATION_DATABASE: ${MONGODB_AUTHENTICATION_DATABASE:-admin}
+      # Подключение Mongo: задаём явно для Spring Boot, чтобы исключить случаи,
+      # когда placeholder из application.yml подставился некорректно и MongoClient ушёл на localhost.
+      SPRING_DATA_MONGODB_HOST: mongo
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: ${MONGODB_DATABASE:-javainternship-payment-service}
+      SPRING_DATA_MONGODB_USERNAME: ${MONGODB_USERNAME:-root}
+      SPRING_DATA_MONGODB_PASSWORD: ${MONGODB_PASSWORD:-root}
+      SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE: ${MONGODB_AUTHENTICATION_DATABASE:-admin}
+      SPRING_DATA_MONGODB_URI: "mongodb://${MONGODB_USERNAME:-root}:${MONGODB_PASSWORD:-root}@mongo:27017/${MONGODB_DATABASE:-javainternship-payment-service}?authSource=${MONGODB_AUTHENTICATION_DATABASE:-admin}"
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       APP_KAFKA_ENABLED: "true"
       APP_KAFKA_TOPIC_CREATE_PAYMENT: create-payment

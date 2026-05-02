@@ -1,6 +1,11 @@
 spring:
   application:
     name: JavaInternship-payment-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: ${JWT_SECRET:development-jwt-secret-at-least-256-bits-long-for-hs256-algorithm-secure-key}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -8,14 +13,6 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
-  data:
-    mongodb:
-      host: ${MONGODB_HOST}
-      port: ${MONGODB_PORT}
-      database: ${MONGODB_DATABASE}
-      username: ${MONGODB_USERNAME}
-      password: ${MONGODB_PASSWORD}
-      authentication-database: ${MONGODB_AUTHENTICATION_DATABASE}
 
 app:
   kafka:

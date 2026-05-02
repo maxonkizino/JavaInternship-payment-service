@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-internship-payment-service
+  labels:
+    app: java-internship-payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-internship-payment-service
+  template:
+    metadata:
+      labels:
+        app: java-internship-payment-service
+    spec:
+      containers:
+        - name: java-internship-payment-service
+          image: maxononion/javainternship-payment-service:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+            - name: DB_DRIVER
