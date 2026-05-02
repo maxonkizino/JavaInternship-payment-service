@@ -20,6 +20,10 @@ spec:
           ports:
             - containerPort: 8084
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: docker
             - name: SERVER_PORT
               value: "8084"
-            - name: DB_DRIVER
+          envFrom:
+            - secretRef:
+                name: java-internship-payment-service-secret

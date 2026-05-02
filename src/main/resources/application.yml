@@ -20,7 +20,7 @@ app:
     topics:
       create-payment: ${APP_KAFKA_TOPIC_CREATE_PAYMENT:create-payment}
   csrng:
-    base-url: ${APP_CSRNG_BASE_URL}
-    path: ${APP_CSRNG_PATH}
-    min: ${APP_CSRNG_MIN}
-    max: ${APP_CSRNG_MAX}
+    base-url: ${APP_CSRNG_BASE_URL:https://csrng.net}
+    path: ${APP_CSRNG_PATH:/csrng/csrng.php}
+    min: ${APP_CSRNG_MIN:0}
+    max: ${APP_CSRNG_MAX:2147483647}
